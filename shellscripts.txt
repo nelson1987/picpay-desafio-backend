@@ -1,0 +1,18 @@
+-- Criar Pasta Test
+mkdir test
+cd test
+
+-- Criar projeto de Test
+dotnet new xunit -n Simplified.UnitTests
+cd ../
+dotnet new sln -n Simplified
+dotnet sln add test/Simplified.UnitTests/Simplified.UnitTests.csproj
+dotnet test
+dotnet build
+--Git
+git stash
+git pull
+git stash pop
+git add .
+git commit -m "commit"
+git push
