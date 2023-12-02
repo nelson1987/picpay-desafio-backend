@@ -3,10 +3,44 @@ namespace Simplified.UnitTests;
 public class TransferenciaServiceTests
 {
     [Fact]
-    public void Test1()
+    public void Dado_Usuario_Com_Saldo_Realizar_Transferencia_Com_Sucesso()
     {
 
     }
+    [Fact]
+    public void Dado_Usuario_Sem_Saldo_Realizar_Transferencia_Com_Erro()
+    {
+
+    }
+    [Fact]
+    public void Dado_Lojista_Com_Saldo_Realizar_Transferencia_Com_Erro()
+    {
+
+    }
+    
+    
+    /*
+    Dado_Usuario_Com_Nome_Cpf_Email_Senha_Confirmar_Dados_Validos
+    Dado_Lojista_Com_Nome_Cpf_Email_Senha_Confirmar_Dados_Validos
+    Dado_Usuario_Sem_Nome_Cpf_Email_Senha_Confirmar_Dados_Invalidos
+    Dado_Lojista_Sem_Nome_Cpf_Email_Senha_Confirmar_Dados_Invalidos
+    Dado_Usuario_Cadastrado_Nao_Cadastrar_Novo_usuario_Com_Mesmo_Cpf
+    Dado_Lojista_Cadastrado_Nao_Cadastrar_Novo_usuario_Com_Mesmo_Cnpj
+    Dado_Usuario_Cadastrado_Nao_Cadastrar_Novo_usuario_Com_Mesmo_Email
+    Dado_Lojista_Cadastrado_Nao_Cadastrar_Novo_usuario_Com_Mesmo_Email
+    Dado_Realizar_Transferencia_Entre_Usuario_E_Usuario_Com_Sucesso
+    Dado_Realizar_Transferencia_Entre_Usuario_E_Lojista_Com_Sucesso
+    Dado_Realizar_Transferencia_Entre_Lojista_E_Lojista_Com_Erro
+    Dado_Realizar_Transferencia_Entre_Lojista_E_Usuario_Com_Erro
+    Dado_Saldo_Usuario_Menor_Que_Valor_Transferencia_Realizar_Transferencia_Com_Erro
+    Dado_Saldo_Usuario_Maior_Que_Valor_Transferencia_Realizar_Transferencia_Com_Sucesso
+    Dado_Saldo_Usuario_Igual_Valor_Transferencia_Realizar_Transferencia_Com_Sucesso
+    Dado_Autorizador_Retornar_Mensagem_Erro_Concluir_Transferencia_Com_Erro
+    Dado_Autorizador_Retornar_Mensagem_Sucesso_Concluir_Transferencia_Com_Sucesso
+    Dado_Haja_Problema_Durante_Transferencia_Retornar_Saldo_Inicial_Das_Contas
+    Dado_Pagamento_Recebido_Receber_Notificacao_Atraves_Servico_Externo_Com_Sucesso
+    Dado_Pagamento_Recebido_Receber_Notificacao_Atraves_Servico_Externo_Com_Erro
+*/
 }
 public record Usuario(string Nome, string Cpf, string Email, string Senha)
 {
@@ -75,32 +109,3 @@ public class RecebePagamento
         return 0;
     }
 }
-/*
-## Objetivo: PicPay Simplificado
-
-Temos 2 tipos de usuários, os comuns e lojistas, ambos têm carteira com dinheiro e 
-realizam transferências entre eles. Vamos nos atentar **somente** ao fluxo de transferência entre dois usuários.
-
-Requisitos:
-
--   Para ambos tipos de usuário, precisamos do Nome Completo, CPF, e-mail e Senha. 
-    CPF/CNPJ e e-mails devem ser únicos no sistema. 
-    Sendo assim, seu sistema deve permitir apenas um cadastro com o mesmo CPF ou endereço de e-mail.
--   A operação de transferência deve ser uma transação (ou seja, revertida em qualquer caso de inconsistência) 
-    e o dinheiro deve voltar para a carteira do usuário que envia.
--   Este serviço deve ser RESTFul.
-
-### Payload
-
-Faça uma **proposta** :heart: de payload, se preferir, temos uma exemplo aqui:
-
-POST /transaction
-
-```json
-{
-    "value": 100.0,
-    "payer": 4,
-    "payee": 15
-}
-```
-*/
