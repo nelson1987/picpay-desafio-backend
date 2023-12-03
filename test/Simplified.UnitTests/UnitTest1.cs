@@ -1,6 +1,7 @@
 using Moq;
 
 namespace Simplified.UnitTests;
+public class AutorizadorTransferenciaServiceTests { }
 public class CriacaoTransferenciaConsumerTests
 {
     private readonly Mock<IAutorizadorTransferenciaService> _autorizadorService;
@@ -13,13 +14,17 @@ public class CriacaoTransferenciaConsumerTests
     private readonly TransferenciaEvent _event;
     public CriacaoTransferenciaConsumerTests()
     {
-        _debitante = new Usuario("Nome", "Cpf", "Email", "Senha") with { Saldo = 10.00M };
-        _creditante = new Usuario("Nome", "Outro Cpf", "Outro Email", "Senha") with { Saldo = 0.00M };
+        _usuarioRepository = new Mock<IUsuarioRepository>();
+        _movimentacaoRepository = new Mock<IMovimentacaoRepository>();
+        _autorizadorService = new Mock<IAutorizadorTransferenciaService>();
+        _debitante = new Usuario("Nome1", "Cpf", "Email", "Senha") with { Saldo = 10.00M };
+        _creditante = new Usuario("Nome2", "Outro Cpf", "Outro Email", "Senha") with { Saldo = 0.00M };
+        _event = new TransferenciaEvent(_debitante, _creditante, 10.00M);
         _usuarioRepository
-            .Setup(x => x.GetById("123", _cancellationToken))
+            .Setup(x => x.GetById(_debitante.Cpf, _cancellationToken))
             .ReturnsAsync(_debitante);
         _usuarioRepository
-            .Setup(x => x.GetById("456", _cancellationToken))
+            .Setup(x => x.GetById(_creditante.Cpf, _cancellationToken))
             .ReturnsAsync(_creditante);
         _autorizadorService
             .Setup(library => library.Get("https://run.mocky.io/v3/5794d450-d2e2-4412-8131-73d0293ac1cc", _cancellationToken))
@@ -33,7 +38,7 @@ public class CriacaoTransferenciaConsumerTests
         //_usuarioRepository
         //    .Setup(library => library.Update(_event.Creditante, _cancellationToken))
         //    .ReturnsAsync(0);
-        _event = new TransferenciaEvent(It.IsAny<Usuario>(), It.IsAny<Usuario>(), 10.00M);
+        //_event = new TransferenciaEvent(It.IsAny<Usuario>(), It.IsAny<Usuario>(), 10.00M);
         _consumer = new CriacaoTransferenciaConsumer(_autorizadorService.Object,
             _usuarioRepository.Object,
             _movimentacaoRepository.Object);
@@ -47,14 +52,29 @@ public class CriacaoTransferenciaConsumerTests
         //Act
         var result = await _consumer.Handle(_event, CancellationToken.None);
         //Assert
-        _usuarioRepository.Verify(library => library.GetById(_event.Creditante.Nome, _cancellationToken), Times.AtMostOnce());
-        _usuarioRepository.Verify(library => library.GetById(_event.Debitante.Nome, _cancellationToken), Times.AtMostOnce());
+        _usuarioRepository.Verify(library => library.GetById(_event.Creditante.Cpf, _cancellationToken), Times.AtMostOnce());
+        _usuarioRepository.Verify(library => library.GetById(_event.Debitante.Cpf, _cancellationToken), Times.AtMostOnce());
         _autorizadorService.Verify(library => library.Get("https://run.mocky.io/v3/5794d450-d2e2-4412-8131-73d0293ac1cc", _cancellationToken), Times.AtMostOnce());
         _movimentacaoRepository.Verify(library => library.Create(_event, _cancellationToken), Times.AtMostOnce());
         _usuarioRepository.Verify(library => library.Update(_event.Debitante, _cancellationToken), Times.AtMostOnce());
         _usuarioRepository.Verify(library => library.Update(_event.Creditante, _cancellationToken), Times.AtMostOnce());
 
         Assert.Equal(0, result);
+    }
+    [Fact]
+    public async Task AutorizarTransferencia_ComErroAsync()
+    {
+        _autorizadorService
+            .Setup(library => library.Get("https://run.mocky.io/v3/5794d450-d2e2-4412-8131-73d0293ac1cc", _cancellationToken))
+            .ReturnsAsync(1);
+        //Act
+        var result = await _consumer.Handle(_event, CancellationToken.None);
+        //Assert
+        _usuarioRepository.Verify(library => library.GetById(_event.Creditante.Cpf, _cancellationToken), Times.AtMostOnce());
+        _usuarioRepository.Verify(library => library.GetById(_event.Debitante.Cpf, _cancellationToken), Times.AtMostOnce());
+        _autorizadorService.Verify(library => library.Get("https://run.mocky.io/v3/5794d450-d2e2-4412-8131-73d0293ac1cc", _cancellationToken), Times.AtMostOnce());
+
+        Assert.Equal(-3, result);
     }
 }
 public class TransferenciaServiceTests
@@ -235,8 +255,8 @@ public class CriacaoTransferenciaConsumer : ICriacaoTransferenciaConsumer
     public async Task<int> Handle(TransferenciaEvent @event, CancellationToken cancellationToken)
     {
 
-        Usuario creditante = await _usuarioRepository.GetById(@event.Creditante.Nome, cancellationToken);
-        Usuario debitante = await _usuarioRepository.GetById(@event.Debitante.Nome, cancellationToken);
+        Usuario creditante = await _usuarioRepository.GetById(@event.Creditante.Cpf, cancellationToken);
+        Usuario debitante = await _usuarioRepository.GetById(@event.Debitante.Cpf, cancellationToken);
         var autorizador = await _httpClient.Get("https://run.mocky.io/v3/5794d450-d2e2-4412-8131-73d0293ac1cc", cancellationToken);
         if (autorizador != 0)
             return -3;
@@ -249,21 +269,6 @@ public class CriacaoTransferenciaConsumer : ICriacaoTransferenciaConsumer
         await _usuarioRepository.Update(@event.Debitante, cancellationToken);
         await _usuarioRepository.Update(@event.Creditante, cancellationToken);
 
-        return 0;
-    }
-}
-public class RecebePagamento
-{
-    private readonly IAutorizadorTransferenciaService _httpClient;
-
-    public RecebePagamento(IAutorizadorTransferenciaService httpClient)
-    {
-        _httpClient = httpClient;
-    }
-
-    public async Task<int> Handle(CancellationToken cancellationToken)
-    {
-        var notificacao = await _httpClient.Get("https://run.mocky.io/v3/54dc2cf1-3add-45b5-b5a9-6bf7e7f1f4a6", cancellationToken);
         return 0;
     }
 }
